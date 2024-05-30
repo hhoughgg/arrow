@@ -39,30 +39,52 @@ import { valueToString } from '../util/pretty.js';
  * @param nullValues
  */
 export function createIsValidFunction<T extends DataType = any, TNull = any>(nullValues?: ReadonlyArray<TNull>) {
-
     if (!nullValues || nullValues.length <= 0) {
         // @ts-ignore
         return function isValid(value: any) { return true; };
     }
 
-    let fnBody = '';
     const noNaNs = nullValues.filter((x) => x === x);
-
-    if (noNaNs.length > 0) {
-        fnBody = `
-    switch (x) {${noNaNs.map((x) => `
-        case ${valueToCase(x)}:`).join('')}
-            return false;
-    }`;
-    }
-
-    // NaN doesn't equal anything including itself, so it doesn't work as a
-    // switch case. Instead we must explicitly check for NaN before the switch.
+    const [a,b,c,d,e,f] = noNaNs
     if (nullValues.length !== noNaNs.length) {
-        fnBody = `if (x !== x) return false;\n${fnBody}`;
+      switch (nullValues.length) {
+        case 0: return function isValid(x: any) { return x===x }
+        case 1: return function isValid(x: any) { return x===x && x!==a }
+        case 2: return function isValid(x: any) { return x===x && x!==a && x!==b }
+        case 3: return function isValid(x: any) { return x===x && x!==a && x!==b && x!==c }
+        case 4: return function isValid(x: any) { return x===x && x!==a && x!==b && x!==c && x!==d }
+        case 5: return function isValid(x: any) { return x===x && x!==a && x!==b && x!==c && x!==d && x!==e }
+        case 6: return function isValid(x: any) { return x===x && x!==a && x!==b && x!==c && x!==d && x!==e && x!==f }
+      }
+    } else {
+      switch (nullValues.length) {
+        case 1: return function isValid(x: any) { return x!==a }
+        case 2: return function isValid(x: any) { return x!==a && x!==b }
+        case 3: return function isValid(x: any) { return x!==a && x!==b && x!==c }
+        case 4: return function isValid(x: any) { return x!==a && x!==b && x!==c && x!==d }
+        case 5: return function isValid(x: any) { return x!==a && x!==b && x!==c && x!==d && x!==e }
+        case 6: return function isValid(x: any) { return x!==a && x!==b && x!==c && x!==d && x!==e && x!==f }
+      }
     }
+    throw new Error(`Unsupported nulls: ${JSON.stringify(nullValues)}`)
+    // let fnBody = '';
+    // const noNaNs = nullValues.filter((x) => x === x);
 
-    return new Function(`x`, `${fnBody}\nreturn true;`) as (value: T['TValue'] | TNull) => boolean;
+    // if (noNaNs.length > 0) {
+    //     fnBody = `
+    // switch (x) {${noNaNs.map((x) => `
+    //     case ${valueToCase(x)}:`).join('')}
+    //         return false;
+    // }`;
+    // }
+
+    // // NaN doesn't equal anything including itself, so it doesn't work as a
+    // // switch case. Instead we must explicitly check for NaN before the switch.
+    // if (nullValues.length !== noNaNs.length) {
+    //     fnBody = `if (x !== x) return false;\n${fnBody}`;
+    // }
+
+    // return new Function(`x`, `${fnBody}\nreturn true;`) as (value: T['TValue'] | TNull) => boolean;
 }
 
 /** @ignore */
